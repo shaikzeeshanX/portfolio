@@ -8,8 +8,8 @@ type Line = { big: boolean; segs: Seg[] }
 /* Two visual tiers: the first two lines are the big bold statement,
    the last two are the smaller tagline underneath. */
 const LINES: Line[] = [
-    { big: true, segs: [{ t: "Building modern" }] },
-    { big: true, segs: [{ t: "web " }, { t: "experiences", grad: true }] },
+    { big: true, segs: [{ t: "Building" }] },
+    { big: true, segs: [{ t: "modern web " }, { t: "experiences", grad: true }] },
     { big: false, segs: [{ t: "with code and" }] },
     { big: false, segs: [{ t: "creativity." }] },
 ]
