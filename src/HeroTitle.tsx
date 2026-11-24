@@ -10,8 +10,7 @@ type Line = { big: boolean; segs: Seg[] }
 const LINES: Line[] = [
     { big: true, segs: [{ t: "Building" }] },
     { big: true, segs: [{ t: "modern web " }, { t: "experiences", grad: true }] },
-    { big: false, segs: [{ t: "with code and" }] },
-    { big: false, segs: [{ t: "creativity." }] },
+    { big: false, segs: [{ t: "with code and creativity." }] },
 ]
 
 const RENDER = LINES.map((line) => {
