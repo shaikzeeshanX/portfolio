@@ -192,8 +192,7 @@ main {
     flex-direction: column;
     justify-content: center;
     padding: 120px clamp(20px, 5vw, 56px) 80px;
-    max-width: var(--max);
-    margin: 0 auto;
+    width: 100%;
     /* the title merges toward the right — keep the pile off the page */
     overflow-x: clip;
 }
@@ -216,7 +215,7 @@ main {
 .hero-title {
     margin: 0;
     font-family: "Arial Black", "Helvetica Neue", Helvetica, Arial, sans-serif;
-    font-size: clamp(40px, 4.8vw, 76px);
+    font-size: clamp(56px, 8vw, 180px);
     line-height: 0.94;
     letter-spacing: -0.035em;
     font-weight: 900;
@@ -227,18 +226,17 @@ main {
     filter: drop-shadow(0 16px 44px rgba(0, 0, 0, 0.62)) drop-shadow(0 4px 12px rgba(0, 0, 0, 0.45));
 }
 
-/* two visual tiers: the statement is big (fits on one line each),
-   the tagline is also big but separate, with tighter word spacing */
+/* two visual tiers: both large, covering the page; tagline slightly smaller */
 .hero-title .ln.big {
     display: block;
-    font-size: clamp(52px, 6.4vw, 104px);
+    font-size: clamp(72px, 10vw, 240px);
     font-weight: 900;
     line-height: 0.92;
 }
 
 .hero-title .ln.sm {
     display: block;
-    font-size: clamp(40px, 4.8vw, 76px);
+    font-size: clamp(56px, 8vw, 180px);
     line-height: 0.94;
     opacity: 0.92;
     letter-spacing: -0.06em;
