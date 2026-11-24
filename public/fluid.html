@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Fluid</title>
+    <!-- no CSS transitions: every frame is a pure function of t -->
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #05070f;
+      }
+      canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+    </style>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <script type="module">
+      import * as THREE from "three";
+      import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+      import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+      import { BokehPass } from "three/addons/postprocessing/BokehPass.js";
+      import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
+      import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
+
+      const DURATION = 6; // seconds — one full, seamless loop
+      const TAU = Math.PI * 2;
+      const R = 1.32;
+
+      // ── deterministic displacement ────────────────────────────────────────
+      // Every term is an integer harmonic of the loop frequency, so the
+      // surface at t and at t + DURATION is bit-identical. No Math.random
+      // anywhere in this file — seek(t) always reproduces the same frame.
+      function displace(x, y, z, a) {
+        let h = 0;
+        h += 0.17 * Math.sin(x * 2.6 + a) * Math.sin(y * 2.9 - a);
+        h += 0.115 * Math.sin(y * 4.3 - 2 * a) * Math.sin(z * 4.1 + a);
+        h += 0.072 * Math.sin(z * 6.7 + 3 * a) * Math.sin(x * 6.3 - 3 * a);
+        h += 0.045 * Math.sin((x + y + z) * 3.4 + 2 * a);
+        return h;
+      }
+
+      // ── renderer / scene ──────────────────────────────────────────────────
+      const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.15;
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+      document.body.appendChild(renderer.domElement);
+
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color("#080d26"); // deep navy, high contrast
+
+      const camera = new THREE.PerspectiveCamera(38, window.innerWidth / window.innerHeight, 0.1, 60);
+      camera.position.set(0, 0, 7.4);
+
+      // ── procedural environment (photorealistic reflections, no textures) ──
+      try {
+        const EW = 64,
+          EH = 32;
+        const data = new Uint8Array(EW * EH * 4);
+        const clamp255 = (v) => (v < 0 ? 0 : v > 255 ? 255 : v | 0);
+        for (let y = 0; y < EH; y++) {
+          for (let x = 0; x < EW; x++) {
+            const u = x / (EW - 1);
+            const v = y / (EH - 1); // 0 = bottom
+            // navy floor → violet ceiling
+            let r = 6 + 96 * v;
+            let g = 10 + 44 * v;
+            let b = 40 + 175 * v;
+            // cool cyan key light
+            let du = Math.abs(u - 0.24);
+            du = Math.min(du, 1 - du);
+            let d = Math.sqrt(du * du * 3.5 + (v - 0.74) * (v - 0.74));
+            let k = Math.max(0, 1 - d / 0.34);
+            r += 205 * k * k;
+            g += 232 * k * k;
+            b += 255 * k * k;
+            // warm violet/magenta bounce on the far side
+            du = Math.abs(u - 0.76);
+            du = Math.min(du, 1 - du);
+            d = Math.sqrt(du * du * 3.5 + (v - 0.4) * (v - 0.4));
+            k = Math.max(0, 1 - d / 0.38);
+            r += 190 * k * k;
+            g += 70 * k * k;
+            b += 235 * k * k;
+            const i = (y * EW + x) * 4;
+            data[i] = clamp255(r);
+            data[i + 1] = clamp255(g);
+            data[i + 2] = clamp255(b);
+            data[i + 3] = 255;
+          }
+        }
+        const envTex = new THREE.DataTexture(data, EW, EH, THREE.RGBAFormat);
+        envTex.mapping = THREE.EquirectangularReflectionMapping;
+        envTex.colorSpace = THREE.SRGBColorSpace;
+        envTex.needsUpdate = true;
+        const pmrem = new THREE.PMREMGenerator(renderer);
+        scene.environment = pmrem.fromEquirectangular(envTex).texture;
+        envTex.dispose();
+        pmrem.dispose();
+      } catch (e) {
+        /* environment is a nicety — lights alone still read correctly */
+      }
+
+      // ── lights ────────────────────────────────────────────────────────────
+      scene.add(new THREE.AmbientLight("#22306e", 0.9));
+      scene.add(new THREE.HemisphereLight("#6d28d9", "#05070f", 0.7));
+
+      const key = new THREE.DirectionalLight("#e8f0ff", 2.8);
+      key.position.set(2.4, 2.8, 2.0);
+      scene.add(key);
+
+      const rim = new THREE.DirectionalLight("#7c3aed", 3.5);
+      rim.position.set(-3.0, -1.2, -1.6);
+      scene.add(rim);
+
+      const kick = new THREE.DirectionalLight("#e879f9", 1.4);
+      kick.position.set(0.6, -2.4, 2.6);
+      scene.add(kick);
+
+      // ── geometry: displaced sphere, normals rebuilt analytically ─────────
+      const geo = new THREE.SphereGeometry(R, 140, 100);
+      const posAttr = geo.attributes.position;
+      const nrmAttr = geo.attributes.normal;
+      const N = posAttr.count;
+
+      const dirs = new Float32Array(N * 3);
+      for (let i = 0; i < N; i++) {
+        const ix = i * 3;
+        const px = posAttr.getX(i),
+          py = posAttr.getY(i),
+          pz = posAttr.getZ(i);
+        const l = Math.hypot(px, py, pz) || 1;
+        dirs[ix] = px / l;
+        dirs[ix + 1] = py / l;
+        dirs[ix + 2] = pz / l;
+      }
+
+      const EPS = 0.045;
+      const _nv = new THREE.Vector3(),
+        _up = new THREE.Vector3(),
+        _t1 = new THREE.Vector3(),
+        _t2 = new THREE.Vector3(),
+        _dA = new THREE.Vector3(),
+        _dB = new THREE.Vector3(),
+        _p0 = new THREE.Vector3(),
+        _pA = new THREE.Vector3(),
+        _pB = new THREE.Vector3(),
+        _e1 = new THREE.Vector3(),
+        _e2 = new THREE.Vector3(),
+        _n = new THREE.Vector3();
+
+      function updateBlob(a) {
+        const pa = posAttr.array;
+        const na = nrmAttr.array;
+        for (let i = 0; i < N; i++) {
+          const ix = i * 3;
+          const dx = dirs[ix],
+            dy = dirs[ix + 1],
+            dz = dirs[ix + 2];
+          _nv.set(dx, dy, dz);
+
+          const h0 = displace(dx, dy, dz, a);
+
+          // tangent frame — swapped near the poles so it never degenerates
+          _up.set(Math.abs(dy) > 0.985 ? 1 : 0, Math.abs(dy) > 0.985 ? 0 : 1, 0);
+          _t1.crossVectors(_up, _nv).normalize();
+          _t2.crossVectors(_nv, _t1);
+          _dA.copy(_nv).addScaledVector(_t1, EPS).normalize();
+          _dB.copy(_nv).addScaledVector(_t2, EPS).normalize();
+
+          const hA = displace(_dA.x, _dA.y, _dA.z, a);
+          const hB = displace(_dB.x, _dB.y, _dB.z, a);
+
+          _p0.copy(_nv).multiplyScalar(R + h0);
+          _pA.copy(_dA).multiplyScalar(R + hA);
+          _pB.copy(_dB).multiplyScalar(R + hB);
+
+          _e1.subVectors(_pA, _p0);
+          _e2.subVectors(_pB, _p0);
+          _n.crossVectors(_e1, _e2);
+          if (_n.dot(_nv) < 0) _n.negate();
+          _n.normalize();
+
+          pa[ix] = _p0.x;
+          pa[ix + 1] = _p0.y;
+          pa[ix + 2] = _p0.z;
+          na[ix] = _n.x;
+          na[ix + 1] = _n.y;
+          na[ix + 2] = _n.z;
+        }
+        posAttr.needsUpdate = true;
+        nrmAttr.needsUpdate = true;
+      }
+
+      const mat = new THREE.MeshStandardMaterial({
+        color: "#0d1440",
+        roughness: 0.28,
+        metalness: 0.22,
+        envMapIntensity: 0.85,
+      });
+      const blob = new THREE.Mesh(geo, mat);
+      blob.frustumCulled = false;
+      scene.add(blob);
+
+      // ── post: depth of field → vignette → tone map ───────────────────────
+      const composer = new EffectComposer(renderer);
+      composer.addPass(new RenderPass(scene, camera));
+
+      const bokehPass = new BokehPass(scene, camera, {
+        focus: 7.4,
+        aperture: 0.005,
+        maxblur: 0.012,
+        aspect: window.innerWidth / window.innerHeight,
+      });
+      composer.addPass(bokehPass);
+
+      const vignettePass = new ShaderPass({
+        uniforms: {
+          tDiffuse: { value: null },
+          offset: { value: 1.15 },
+          darkness: { value: 0.9 },
+        },
+        vertexShader: /* glsl */ `
+          varying vec2 vUv;
+          void main() {
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+          }`,
+        fragmentShader: /* glsl */ `
+          uniform sampler2D tDiffuse;
+          uniform float offset;
+          uniform float darkness;
+          varying vec2 vUv;
+          void main() {
+            vec4 c = texture2D( tDiffuse, vUv );
+            float d = length( ( vUv - vec2( 0.5 ) ) * offset );
+            float v = smoothstep( 0.42, 0.95, d );
+            c.rgb = mix( c.rgb, vec3( 0.0 ), v * darkness );
+            gl_FragColor = c;
+          }`,
+      });
+      composer.addPass(vignettePass);
+      composer.addPass(new OutputPass());
+
+      // ── frame ─────────────────────────────────────────────────────────────
+      function renderAt(tSeconds) {
+        const t = ((tSeconds % DURATION) + DURATION) % DURATION; // wrap, never negative
+        const a = (t / DURATION) * TAU;
+
+        updateBlob(a);
+
+        // slow camera drift — integer harmonics only, so it closes the loop
+        camera.position.set(Math.sin(a) * 0.9, Math.sin(a * 2) * 0.5, 7.4 + Math.cos(a) * 0.5);
+        camera.lookAt(0, 0, 0);
+        camera.updateMatrixWorld();
+
+        composer.render();
+        return t;
+      }
+
+      /* Deterministic frame access: seek(0) … seek(6) always produce the
+         exact same pixels, which is what makes this exportable frame by
+         frame. t is in seconds. */
+      window.DURATION = DURATION;
+      window.seek = function seek(t) {
+        const wrapped = renderAt(Number(t) || 0);
+        startedAt = performance.now() - wrapped * 1000; // keep playback in phase
+        return wrapped;
+      };
+
+      function resize() {
+        const w = window.innerWidth || 1;
+        const h = window.innerHeight || 1;
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+        renderer.setSize(w, h);
+        composer.setSize(w, h);
+        const bu = bokehPass.bokehUniforms || bokehPass.uniforms;
+        if (bu && bu.aspect) bu.aspect.value = w / h;
+      }
+      window.addEventListener("resize", resize);
+      resize();
+
+      // ── playback: one 6s loop, forever, via requestAnimationFrame ────────
+      let startedAt = performance.now();
+      function loop(now) {
+        renderAt((now - startedAt) / 1000);
+        requestAnimationFrame(loop);
+      }
+      requestAnimationFrame(loop);
+
+      window.__ready = true;
+    </script>
+  </body>
+</html>

@@ -1,0 +1,922 @@
+:root {
+    --ink: #ffffff;
+    --muted: rgba(255, 255, 255, 0.92);
+    --faint: rgba(255, 255, 255, 0.72);
+    --accent: #fde047; /* yellow — matches the sun + ridge crests */
+    --accent-2: #22d3ee; /* cyan — matches the grid lines */
+    --line: rgba(255, 255, 255, 0.42);
+    --card: rgba(255, 255, 255, 0.16);
+    --glass: rgba(124, 58, 237, 0.34);
+    --max: 1180px;
+    color-scheme: light;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: auto;
+}
+
+html.lenis,
+html.lenis body {
+    height: auto;
+}
+
+.lenis.lenis-smooth {
+    scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+    overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+    overflow: hidden;
+}
+
+body {
+    margin: 0;
+    background: #a21caf; /* matches the scene — never black */
+    color: var(--ink);
+    font-family: "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
+    font-weight: 700;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+}
+
+button {
+    font: inherit;
+    color: inherit;
+    background: none;
+    border: 0;
+    cursor: pointer;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+/* ── background ── */
+/* negative z-index so it paints below the (static) main content */
+.bg {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+}
+
+/* light touch: a top scrim only so the fixed nav stays readable.
+   The scene itself stays bright — no dark wash over it. */
+.bg-scrim {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        180deg,
+        rgba(88, 14, 110, 0.55) 0%,
+        rgba(162, 28, 175, 0.08) 16%,
+        rgba(162, 28, 175, 0) 40%
+    );
+}
+
+.page {
+    position: relative;
+    z-index: 1;
+    isolation: isolate;
+}
+
+main {
+    position: relative;
+    z-index: 1;
+}
+
+/* ── nav ── */
+.nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 20px clamp(20px, 5vw, 56px);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    background: linear-gradient(180deg, rgba(124, 58, 237, 0.62), rgba(124, 58, 237, 0));
+    border-bottom: 1px solid rgba(255, 255, 255, 0.28);
+}
+
+.brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    text-shadow: 0 2px 12px rgba(70, 10, 90, 0.6);
+}
+
+.brand-mark {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #fff, var(--accent));
+    box-shadow: 0 0 16px rgba(253, 224, 71, 0.95);
+    flex-shrink: 0;
+}
+
+.brand-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1;
+    gap: 4px;
+}
+
+.brand-name {
+    font-weight: 900;
+    letter-spacing: 0.16em;
+    font-size: 13px;
+    text-transform: uppercase;
+}
+
+.brand-sub {
+    font-weight: 800;
+    letter-spacing: 0.24em;
+    font-size: 9px;
+    text-transform: uppercase;
+    opacity: 0.85;
+}
+
+.nav nav {
+    display: flex;
+    gap: clamp(8px, 2vw, 26px);
+}
+
+.nav nav button {
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 6px 2px;
+    position: relative;
+    transition: color 0.25s ease;
+    text-shadow: 0 2px 10px rgba(70, 10, 90, 0.55);
+}
+
+.nav nav button::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 100%;
+    bottom: 0;
+    height: 2px;
+    background: var(--accent);
+    transition: right 0.3s ease;
+}
+
+.nav nav button:hover {
+    color: var(--ink);
+}
+
+.nav nav button:hover::after {
+    right: 0;
+}
+
+/* ── hero ── */
+.hero {
+    min-height: 100vh;
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 120px clamp(20px, 5vw, 56px) 80px;
+    max-width: var(--max);
+    margin: 0 auto;
+    /* the title merges toward the right — keep the pile off the page */
+    overflow-x: clip;
+}
+
+.eyebrow {
+    margin: 0 0 18px;
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--accent);
+    text-shadow: 0 2px 14px rgba(70, 10, 90, 0.7);
+}
+
+/* ── hero title ──
+   Every character is its own inline-block so it can fly in independently.
+   They all start pulled toward the right end of their line — one merged,
+   blurred cluster — then slide back into their own slots. The stagger grows
+   leftward, so the wave begins on the RIGHT edge and sweeps left. */
+.hero-title {
+    margin: 0;
+    font-family: "Arial Black", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: clamp(40px, 6.4vw, 88px);
+    line-height: 0.94;
+    letter-spacing: -0.035em;
+    font-weight: 900;
+    text-transform: uppercase;
+    color: var(--ink);
+    text-shadow: 0 6px 34px rgba(70, 10, 90, 0.75), 0 2px 6px rgba(70, 10, 90, 0.5);
+    /* a dark, attractive shadow sitting behind the whole headline */
+    filter: drop-shadow(0 16px 44px rgba(0, 0, 0, 0.62)) drop-shadow(0 4px 12px rgba(0, 0, 0, 0.45));
+}
+
+/* two visual tiers: the statement is doubled, the tagline stays the base size */
+.hero-title .ln.big {
+    display: block;
+    font-size: 2em;
+    font-weight: 900;
+    line-height: 0.92;
+}
+
+.hero-title .ln.sm {
+    display: block;
+    font-size: 1em;
+    line-height: 0.94;
+    opacity: 0.92;
+}
+
+.hero-title .ln {
+    display: block;
+}
+
+.ch {
+    display: inline-block;
+    will-change: transform, opacity, filter;
+    animation: chSort 0.95s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: var(--d, 0s);
+}
+
+@keyframes chSort {
+    0% {
+        opacity: 0.55;
+        transform: translate3d(calc((var(--n) - var(--i)) * 0.55em), 0, 0);
+        filter: blur(13px);
+    }
+    35% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+        filter: blur(0);
+    }
+}
+
+/* the gradient word: positioned so the per-character gradient tiles line up
+   into one continuous sweep (see HeroTitle's offsetLeft measurement).
+   A text-shadow here would paint OVER a background-clip:text fill and muddy
+   it, so the glow is a filter on the wrapper instead. */
+.run {
+    position: relative;
+    display: inline-block;
+    font-style: normal;
+    filter: drop-shadow(0 6px 26px rgba(70, 10, 90, 0.65));
+}
+
+.ch.grad {
+    background-image: linear-gradient(100deg, #fff 0%, var(--accent) 45%, var(--accent-2) 100%);
+    background-repeat: no-repeat;
+    background-size: var(--gsize, 100%) 100%;
+    background-position: var(--gx, 0) 0;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    text-shadow: none;
+}
+
+.lede {
+    margin: 28px 0 0;
+    max-width: 30em;
+    font-size: clamp(17px, 1.5vw, 21px);
+    line-height: 1.55;
+    font-weight: 700;
+    color: var(--muted);
+    text-shadow: 0 3px 18px rgba(70, 10, 90, 0.75);
+}
+
+.hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 36px;
+}
+
+.btn {
+    padding: 15px 28px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 900;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    transition: transform 0.25s ease, background 0.25s ease, border-color 0.25s ease;
+}
+
+.btn.primary {
+    background: linear-gradient(100deg, var(--accent), #fff);
+    color: #5b1070;
+    box-shadow: 0 10px 30px rgba(70, 10, 90, 0.45);
+}
+
+.btn.primary:hover {
+    transform: translateY(-2px);
+}
+
+.btn.ghost {
+    border: 2px solid rgba(255, 255, 255, 0.85);
+    background: rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(8px);
+    color: #fff;
+    text-shadow: 0 2px 10px rgba(70, 10, 90, 0.6);
+}
+
+.btn.ghost:hover {
+    background: rgba(255, 255, 255, 0.32);
+    transform: translateY(-2px);
+}
+
+.scroll-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 64px;
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--ink);
+    text-shadow: 0 2px 12px rgba(70, 10, 90, 0.7);
+}
+
+.scroll-hint-line {
+    width: 46px;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.5);
+    position: relative;
+    overflow: hidden;
+}
+
+.scroll-hint-line::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--accent);
+    animation: sweep 2.4s ease-in-out infinite;
+}
+
+@keyframes sweep {
+    0% {
+        transform: translateX(-100%);
+    }
+    60%,
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+/* ── panels ── */
+/* bright frosted glass: the neon scene still reads through,
+   but heavy enough to keep ultra-bold text crisp */
+.panel {
+    max-width: var(--max);
+    margin: 0 auto;
+    padding: clamp(70px, 12vh, 140px) clamp(24px, 4vw, 56px);
+    background: linear-gradient(150deg, rgba(255, 255, 255, 0.24), rgba(124, 58, 237, 0.4));
+    backdrop-filter: blur(20px) saturate(1.35);
+    -webkit-backdrop-filter: blur(20px) saturate(1.35);
+    border-radius: 26px;
+    border: 2px solid rgba(255, 255, 255, 0.55);
+    box-shadow: 0 30px 80px rgba(70, 10, 90, 0.4);
+}
+
+.panel + .panel {
+    margin-top: clamp(24px, 4vh, 48px);
+}
+
+.panel-head {
+    display: flex;
+    align-items: baseline;
+    gap: 18px;
+    margin-bottom: clamp(32px, 5vw, 56px);
+}
+
+.panel-head .index {
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    text-shadow: 0 2px 10px rgba(70, 10, 90, 0.6);
+}
+
+.panel-head h2 {
+    margin: 0;
+    font-size: clamp(32px, 5vw, 62px);
+    letter-spacing: -0.03em;
+    font-weight: 900;
+    text-transform: uppercase;
+    color: var(--ink);
+    text-shadow: 0 4px 24px rgba(70, 10, 90, 0.6);
+}
+
+.panel-hint {
+    margin-left: auto;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.85);
+    text-shadow: 0 2px 10px rgba(70, 10, 90, 0.6);
+    white-space: nowrap;
+}
+
+/* about */
+.about-grid {
+    display: grid;
+    gap: 34px;
+}
+
+.about-grid .big {
+    margin: 0;
+    font-size: clamp(24px, 3.2vw, 42px);
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    font-weight: 900;
+    max-width: 20em;
+    color: var(--ink);
+    text-shadow: 0 4px 24px rgba(70, 10, 90, 0.55);
+}
+
+.about-cols {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 28px;
+    max-width: 780px;
+}
+
+.about-cols p {
+    margin: 0;
+    line-height: 1.65;
+    font-weight: 700;
+    color: var(--muted);
+    text-shadow: 0 2px 14px rgba(70, 10, 90, 0.5);
+}
+
+/* a shared window onto the fluid loop — every box in the section reads
+   through it, so only one WebGL context is needed per section */
+.work-stage,
+.skills-stage {
+    position: relative;
+    isolation: isolate;
+    border-radius: 20px;
+    overflow: hidden;
+    padding: 12px;
+    background: #05070f; /* holds the layout if the backdrop is slow/absent */
+    border: 1px solid rgba(255, 255, 255, 0.24);
+}
+
+.fluid-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    pointer-events: none;
+}
+
+/* projects — each card is a window onto the fluid (fluid = total background) */
+.projects-grid {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+}
+
+.project-card {
+    position: relative;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    background: transparent; /* fluid shows through as the total background */
+    overflow: hidden;
+    box-shadow: 0 20px 46px rgba(4, 6, 20, 0.5);
+    transition: transform 0.35s ease, border-color 0.35s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.project-card:hover {
+    transform: translateY(-6px);
+    border-color: rgba(253, 224, 71, 0.7);
+}
+
+.project-thumb {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    background: #05070f;
+}
+
+.project-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.5s ease;
+}
+
+.project-card:hover .project-thumb img {
+    transform: scale(1.06);
+}
+
+.project-body {
+    padding: 20px 22px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.project-n {
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: 0.16em;
+    color: var(--accent);
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+}
+
+.project-title {
+    margin: 0;
+    font-size: clamp(20px, 2.4vw, 30px);
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    font-weight: 900;
+    text-transform: uppercase;
+    color: var(--ink);
+    text-shadow: 0 3px 18px rgba(0, 0, 0, 0.6);
+    --tc-h: 1.2em;
+}
+
+.project-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+    padding: 12px 20px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #2a0b3f;
+    background: linear-gradient(100deg, var(--accent), #fff);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    width: fit-content;
+    transition: transform 0.25s ease;
+}
+
+.project-link:hover {
+    transform: translateY(-2px);
+}
+
+.work-item {
+    display: flex;
+    align-items: center;
+    gap: clamp(16px, 4vw, 48px);
+    padding: clamp(20px, 2.6vw, 30px) clamp(18px, 2.4vw, 30px);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    /* translucent so the fluid geometry shows through the box */
+    background: linear-gradient(160deg, rgba(58, 10, 78, 0.7), rgba(34, 4, 48, 0.78));
+    box-shadow: 0 20px 46px rgba(4, 6, 20, 0.5);
+    transition: background 0.35s ease, border-color 0.35s ease, transform 0.35s ease;
+    cursor: pointer;
+}
+
+.work-item:hover {
+    background: linear-gradient(160deg, rgba(78, 15, 104, 0.82), rgba(46, 6, 64, 0.86));
+    border-color: rgba(253, 224, 71, 0.55);
+    transform: translateX(6px);
+}
+
+.work-n {
+    font-size: 14px;
+    font-weight: 900;
+    letter-spacing: 0.16em;
+    color: var(--accent);
+    min-width: 32px;
+}
+
+.work-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.work-title {
+    margin: 0;
+    font-size: clamp(21px, 2.7vw, 34px);
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    font-weight: 900;
+    text-transform: uppercase;
+    color: var(--ink);
+    text-shadow: 0 3px 18px rgba(0, 0, 0, 0.5);
+    /* the carousel window is exactly one line tall */
+    --tc-h: 1.2em;
+}
+
+/* ── Text Carousel ──
+   the track steps by exactly one --tc-h per index, so each item lands
+   flush inside the mask */
+.tc {
+    display: block;
+    overflow: hidden;
+    height: var(--tc-h, 1.2em);
+}
+
+.tc-track {
+    display: block;
+    transition: transform 0.75s cubic-bezier(0.76, 0, 0.24, 1);
+    will-change: transform;
+}
+
+.tc-item {
+    display: block;
+    height: var(--tc-h, 1.2em);
+    line-height: var(--tc-h, 1.2em);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.tc-item.alt {
+    color: var(--accent-2);
+}
+
+.work-desc {
+    margin: 12px 0 0;
+    font-weight: 700;
+    line-height: 1.55;
+    max-width: 46em;
+    color: var(--muted);
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
+}
+
+.work-arrow {
+    font-size: 26px;
+    font-weight: 900;
+    color: var(--faint);
+    transition: transform 0.3s ease, color 0.3s ease;
+}
+
+.work-item:hover .work-arrow {
+    transform: translateX(8px);
+    color: var(--accent);
+}
+
+/* skills — collapsed tiles that open on click, floating over the fluid */
+.skills-grid {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+    gap: 14px;
+    align-items: start;
+}
+
+.skill-card {
+    background: linear-gradient(160deg, rgba(30, 6, 48, 0.68), rgba(12, 4, 26, 0.8));
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    border-radius: 16px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    transition: transform 0.3s ease, border-color 0.3s ease, background 0.3s ease;
+    box-shadow: 0 16px 40px rgba(4, 6, 20, 0.5);
+    overflow: hidden;
+}
+
+.skill-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(253, 224, 71, 0.65);
+}
+
+.skill-card.open {
+    border-color: var(--accent);
+    background: linear-gradient(160deg, rgba(46, 10, 70, 0.8), rgba(18, 6, 36, 0.88));
+}
+
+.skill-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    width: 100%;
+    padding: 22px;
+    text-align: left;
+}
+
+.skill-title {
+    font-size: 14px;
+    font-weight: 900;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent);
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.65);
+}
+
+.skill-meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.skill-count {
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    color: rgba(255, 255, 255, 0.78);
+}
+
+.skill-chev {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    font-size: 17px;
+    font-weight: 900;
+    line-height: 1;
+    color: #fff;
+    transition: transform 0.45s cubic-bezier(0.76, 0, 0.24, 1), background 0.3s ease,
+        color 0.3s ease, border-color 0.3s ease;
+}
+
+.skill-card.open .skill-chev {
+    transform: rotate(45deg);
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #2a0b3f;
+}
+
+/* height animates through the grid track — no magic max-height number */
+.skill-body {
+    display: grid;
+    grid-template-rows: 0fr;
+    opacity: 0;
+    transition: grid-template-rows 0.55s cubic-bezier(0.76, 0, 0.24, 1), opacity 0.4s ease;
+}
+
+.skill-card.open .skill-body {
+    grid-template-rows: 1fr;
+    opacity: 1;
+}
+
+.skill-body-inner {
+    overflow: hidden;
+    min-height: 0;
+    padding: 0 22px;
+}
+
+.skill-rot {
+    margin-bottom: 18px;
+}
+
+/* ── Originkit RotatingText ──
+   the badge clips its characters while GSAP slides them, so the roll reads
+   as a slot rather than an overflow */
+.rt {
+    font-kerning: normal;
+}
+
+.rt-badge {
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+    min-height: 1.5em;
+}
+
+.rt-prefix {
+    font-size: 0.7em;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    opacity: 0.85;
+}
+
+.rt .char {
+    display: inline-block;
+}
+
+.skill-card ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.skill-card li {
+    font-size: 16px;
+    font-weight: 800;
+    color: rgba(255, 255, 255, 0.95);
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.22);
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.55);
+}
+
+.skill-card li:last-child {
+    border-bottom: 0;
+    padding-bottom: 0;
+}
+
+/* contact */
+/* sized down from the demo: shaikzeeshan90047@gmail.com is far longer
+   than the placeholder address, so it has to fit on one line */
+.contact-mail {
+    display: inline-block;
+    font-size: clamp(18px, 4.4vw, 54px);
+    font-weight: 900;
+    letter-spacing: -0.035em;
+    text-transform: uppercase;
+    background: linear-gradient(100deg, #fff 0%, var(--accent) 50%, var(--accent-2) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    word-break: break-word;
+    filter: drop-shadow(0 6px 26px rgba(70, 10, 90, 0.6));
+}
+
+.contact-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 26px;
+    margin-top: 34px;
+}
+
+.contact-links a {
+    font-size: 15px;
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink);
+    padding-bottom: 5px;
+    border-bottom: 3px solid rgba(255, 255, 255, 0.7);
+    text-shadow: 0 2px 12px rgba(70, 10, 90, 0.6);
+    transition: color 0.25s ease, border-color 0.25s ease;
+}
+
+.contact-links a:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+}
+
+.foot {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: clamp(60px, 10vh, 110px);
+    padding-top: 22px;
+    border-top: 2px solid rgba(255, 255, 255, 0.5);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--faint);
+}
+
+@media (max-width: 720px) {
+    .nav nav {
+        display: none;
+    }
+    .work-arrow {
+        display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ch {
+        animation: none;
+        opacity: 1;
+        transform: none;
+        filter: none;
+    }
+    .tc-track {
+        transition: none;
+    }
+    .scroll-hint-line::after {
+        animation: none;
+    }
+    .skill-body,
+    .skill-chev {
+        transition: none;
+    }
+}

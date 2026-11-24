@@ -1,0 +1,33 @@
+{
+  "version": 2,
+  "skills": {
+    "butter-smooth-scrolling": {
+      "source": "Manuelvillarvieites/n8n-and-claude",
+      "commit": "c982d3a628af8e383d7cdb4df2a48ea5ecdda333",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/butter-smooth-scrolling/SKILL.md",
+      "computedHash": "07a4bcf4caa9d6c393b2a7e29cb1337c661e6067739549856f5d809eb8d05bfc"
+    },
+    "find-skills": {
+      "source": "vercel-labs/skills",
+      "commit": "57217cf86ba38148a57af9e90d14a4c049558330",
+      "sourceType": "github",
+      "skillPath": "skills/find-skills/SKILL.md",
+      "computedHash": "7bc223e2aafbdbf6e50ea243ba6ef67fe432bb069ab439fea0390795dac0bf7f"
+    },
+    "lenis-smooth-scroll": {
+      "source": "ume0207/claude-code-skills",
+      "commit": "e96a9d7dae0e20c75b8b367a08199e01b3a686e4",
+      "sourceType": "github",
+      "skillPath": "skills/lenis-smooth-scroll/SKILL.md",
+      "computedHash": "fd27558c1accf67a60d641ba7a61292927290a256fdeee70668db6f3a479bb10"
+    },
+    "slideshow": {
+      "source": "heygen-com/hyperframes",
+      "commit": "4354b177eee9bbf9295cbf11a6938e2c877f483d",
+      "sourceType": "github",
+      "skillPath": "skills/slideshow/SKILL.md",
+      "computedHash": "a7d87591e3b0ff9eaba32df4ca4dc6d46fbb8824751a37f5cede2cda20d434e5"
+    }
+  }
+}
