@@ -376,13 +376,14 @@ main {
     animation: sweep 2.4s ease-in-out infinite;
 }
 
-@keyframes sweep {
-    0% {
-        transform: translateX(-100%);
-    }
-    60%,
-    100% {
-        transform: translateX(100%);
+.hero-float-host {
+    width: 100%;
+    animation: heroFloat 4.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .hero-float-host {
+        animation: none;
     }
 }
 
