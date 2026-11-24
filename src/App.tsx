@@ -1,6 +1,7 @@
 import { useState } from "react"
 import WireTerrainSynth from "./WireTerrainSynth"
 import HeroTitle from "./HeroTitle"
+import BlockTextReveal from "./BlockTextReveal"
 import TextCarousel from "./TextCarousel"
 import RotatingText from "./RotatingText"
 import type { RotatingTextProps } from "./RotatingText"
@@ -132,7 +133,31 @@ export default function App() {
                 {/* ── Hero ── */}
                 <section id="home" className="hero">
                     <p className="eyebrow">Frontend Developer · Freelancer</p>
-                    <HeroTitle />
+                    <BlockTextReveal
+                        text={"Building modern\nweb experiences\nwith code and creativity."}
+                        font={{
+                            variant: "Bold",
+                            fontSize: "clamp(60px, 10vw, 200px)",
+                            fontFamily: '"Arial Black", "Helvetica Neue", Helvetica, Arial, sans-serif',
+                            fontWeight: 900,
+                            lineHeight: "0.94em",
+                            letterSpacing: "-0.035em",
+                            textAlign: "left",
+                            textTransform: "uppercase",
+                        }}
+                        align="left"
+                        textColor="#ffffff"
+                        blockColor="#FDE047"
+                        revealType="lines"
+                        direction="left"
+                        rounded={0}
+                        speed={50}
+                        highlight={[]}
+                        style={{
+                            minHeight: "40vh",
+                            filter: "drop-shadow(0 16px 44px rgba(0, 0, 0, 0.62)) drop-shadow(0 4px 12px rgba(0, 0, 0, 0.45))",
+                        }}
+                    />
                     <div className="hero-actions">
                         <button className="btn primary" onClick={() => scrollTo("work")}>
                             View My Work
