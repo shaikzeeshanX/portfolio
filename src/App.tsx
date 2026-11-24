@@ -1,6 +1,5 @@
 import { useState } from "react"
 import WireTerrainSynth from "./WireTerrainSynth"
-import HeroTitle from "./HeroTitle"
 import BlockTextReveal from "./BlockTextReveal"
 import TextCarousel from "./TextCarousel"
 import RotatingText from "./RotatingText"
