@@ -133,7 +133,7 @@ export default function App() {
                 <section id="home" className="hero">
                     <p className="eyebrow">Frontend Developer · Freelancer</p>
                     <BlockTextReveal
-                        text={"Building modern\nweb experiences\nwith code and creativity."}
+                        text={"Building\nmodern web experiences\nwith code and creativity."}
                         font={{
                             variant: "Bold",
                             fontSize: "clamp(60px, 10vw, 200px)",
